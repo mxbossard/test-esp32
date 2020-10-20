@@ -5,11 +5,24 @@
 
 class WebAnimator {
 
-public:
-    WebAnimator();
-    ~WebAnimator();
+//protected:
+    HTTPClient * _client = nullptr;
+    U8G2 * _display = nullptr;
+    DynamicJsonDocument * _doc = nullptr;
+    const int _displayHeight;
+    const int _displayWidth;
+    const int _fontHeight;
+    const int _fontWidth;
 
-    bool begin(HTTPClient &client, U8G2 &display);
+    void initU8g2();
+
+    void displayPageInternal(JsonObject & page);
+
+    void displayPagesInternal(DynamicJsonDocument & doc);
+
+public:
+    WebAnimator(HTTPClient & client, U8G2 & display);
+    ~WebAnimator();
 
     void requestAnimation(String url);
 
@@ -17,16 +30,4 @@ public:
 
     void displayText(String text);
 
-protected:
-    HTTPClient* _client = nullptr;
-    U8G2* _display = nullptr;
-    DynamicJsonDocument* _doc = nullptr;
-    int _screenHeight = 128;
-    int _screenWidth = 64;
-    int _fontHeight = 14;
-    int _fontWidth = 7;
-
-    void displayPageInternal(JsonObject &page);
-
-    void displayPagesInternal(DynamicJsonDocument &doc);
 };

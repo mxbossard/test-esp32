@@ -3,8 +3,16 @@
 /**
  * constructor
  */
-WebAnimator::WebAnimator() {
-}
+WebAnimator::WebAnimator(HTTPClient & client, U8G2 & display) : 
+    _displayHeight(display.getDisplayHeight()), 
+    _displayWidth(display.getDisplayWidth()),
+    _fontHeight(17),
+    _fontWidth(7)
+    {
+    _client = & client;
+    _display = & display;
+    _doc = new DynamicJsonDocument(4096);
+};
 
 /**
  * destructor
@@ -16,18 +24,8 @@ WebAnimator::~WebAnimator() {
 }
 
 /**
- * @param client HTTPClient&
- * @return success bool
  */
-bool WebAnimator::begin(HTTPClient &client, U8G2 &display) {
-    _client = &client;
-    _display = &display;
-    _doc = & DynamicJsonDocument(4096);
-    _screenHeight = display.getHeight();
-    _screenWidth = display.getWidth();
-    _fontHeight = 17;
-    _fontWidth = 7;
-
+void WebAnimator::initU8g2() {
     // ArduinoJson only support HTTP1.0 streaming.
     _client->useHTTP10(true);
 
@@ -65,7 +63,7 @@ void WebAnimator::requestAnimation(String url) {
 /**
  */
 void WebAnimator::displayAnimationOnce() {
-    displayPagesInternal(*_doc);
+    displayPagesInternal(_doc);
 }
 
 /**
@@ -82,7 +80,7 @@ void WebAnimator::displayText(String text) {
     displayPagesInternal(*_doc);
 }
 
-void WebAnimator::displayPageInternal(JsonObject &page) {
+void WebAnimator::displayPageInternal(JsonObject & page) {
     if (!page) return;
     const char* text = page["text"];
 
@@ -103,7 +101,7 @@ void WebAnimator::displayPageInternal(JsonObject &page) {
     uint16_t i, x, y;
     // u8x8 does not wrap lines.
     x = 0; y = 0;
-    for (i = 0 ; i < strlen(text) && (y + _fontHeight) <= _screenHeight ; i ++) {
+    for (i = 0 ; i < strlen(text) && (y + _fontHeight) <= _displayHeight ; i ++) {
         strncpy(currentChar, &text[i], sizeof(char) * 1);
 
         if (strcmp(currentChar, "\n") == 0) {
@@ -119,7 +117,7 @@ void WebAnimator::displayPageInternal(JsonObject &page) {
             charWidth = charWidth / 2;
         }
         
-        if (x + charWidth > _screenWidth) {
+        if (x + charWidth > _displayWidth) {
             // Reaching end of line
             if ((i + 1) < strlen(text)) {
                 strncpy(nextChar, &text[i + 1], sizeof(char) * 1);
@@ -156,7 +154,7 @@ void WebAnimator::displayPageInternal(JsonObject &page) {
     _display->sendBuffer();
 }
 
-void WebAnimator::displayPagesInternal(DynamicJsonDocument &doc) {
+void WebAnimator::displayPagesInternal(DynamicJsonDocument & doc) {
     JsonArray pages = doc["pages"];
     if (!pages) return;
 
